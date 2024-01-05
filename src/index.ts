@@ -449,9 +449,9 @@ class Json2iob {
 
           if (options.disablePadIndex) {
             index = indexNumber.toString();
-          } else if (indexNumber < 10) {
+          }  else {
             // reassign index in case zeroBasedarrayIndex is enabled
-            index = `0${indexNumber}`;
+            index = `${indexNumber < 10 ? "0" : ""}${indexNumber}`;
           }
 
           arrayPath = key + index;
