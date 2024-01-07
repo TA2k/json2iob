@@ -197,7 +197,7 @@ class Json2iob {
           name = element[options.preferedArrayDesc];
         }
         await this.adapter
-          .setObjectNotExistsAsync(path, {
+          .extendObjectAsync(path, {
             type: "channel",
             common: {
               name: name,
@@ -315,6 +315,7 @@ class Json2iob {
    * @returns {Promise<void>} - A promise that resolves when the state object is created.
    */
   async _createState(path: string, common: any, options: Options = {}): Promise<void> {
+    path = path.toString().replace(this.forbiddenCharsRegex, "_");
     await this.adapter
       .extendObjectAsync(path, {
         type: "state",
@@ -352,7 +353,7 @@ class Json2iob {
           this.adapter.log.debug("Cannot extract empty: " + path + "." + key + "." + index);
           continue;
         }
-        
+
         let indexNumber = parseInt(index) + 1;
         index = indexNumber.toString();
 
@@ -449,7 +450,7 @@ class Json2iob {
 
           if (options.disablePadIndex) {
             index = indexNumber.toString();
-          }  else {
+          } else {
             // reassign index in case zeroBasedarrayIndex is enabled
             index = `${indexNumber < 10 ? "0" : ""}${indexNumber}`;
           }
