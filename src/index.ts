@@ -193,7 +193,7 @@ class Json2iob {
           name = element[options.preferedArrayDesc];
         }
         await this.adapter
-          .setObjectNotExistsAsync(path, {
+          .extendObjectAsync(path, {
             type: "channel",
             common: {
               name: name,
@@ -311,6 +311,7 @@ class Json2iob {
    * @returns {Promise<void>} - A promise that resolves when the state object is created.
    */
   async _createState(path: string, common: any, options: Options = {}) {
+    path = path.toString().replace(this.forbiddenCharsRegex, "_");
     await this.adapter
       .extendObjectAsync(path, {
         type: "state",

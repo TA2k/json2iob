@@ -95,7 +95,7 @@ for (const key in this.json2iob.alreadyCreatedObjects) {
 
 ### Changelog
 
-2.6.0 convert to TypeScript and add unit option
+2.6.5 convert to TypeScript and add unit option
 
 2.5.2 add forbidden charackter replacing
 
