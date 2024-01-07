@@ -3,6 +3,8 @@ import JSONbig from "json-bigint";
 type Options = {
   write?: boolean; // Activate write for all states.
   forceIndex?: boolean; // Instead of trying to find names for array entries, use the index as the name.
+  disablePadIndex?: boolean; // Disables padding of array index numbers if forceIndex = true
+  zeroBasedArrayIndex?: boolean; // start array index from 0 if forceIndex = true
   channelName?: string; // Set name of the root channel.
   preferedArrayName?: string; // Set key to use this as an array entry name.
   preferedArrayDesc?: string;
@@ -55,6 +57,8 @@ class Json2iob {
    * @param {Options} [options={}] - The parsing options.
    * @param {boolean} [options.write] - Activate write for all states.
    * @param {boolean} [options.forceIndex] - Instead of trying to find names for array entries, use the index as the name.
+   * @param {boolean} [options.disablePadIndex] - Disables padding of array index numbers if forceIndex = true
+   * @param {boolean} [options.zeroBasedArrayIndex] - Start array index from 0 if forceIndex = true
    * @param {string} [options.channelName] - Set name of the root channel.
    * @param {string} [options.preferedArrayName] - Set key to use this as an array entry name.
    * @param {string} [options.preferedArrayDesc] - Set key to use this as an array entry description.
@@ -193,7 +197,7 @@ class Json2iob {
           name = element[options.preferedArrayDesc];
         }
         await this.adapter
-          .extendObjectAsync(path, {
+          .setObjectNotExistsAsync(path, {
             type: "channel",
             common: {
               name: name,
@@ -310,8 +314,7 @@ class Json2iob {
    * @param {boolean} [options.dontSaveCreatedObjects] - If true, the created object will not be saved.
    * @returns {Promise<void>} - A promise that resolves when the state object is created.
    */
-  async _createState(path: string, common: any, options: Options = {}) {
-    path = path.toString().replace(this.forbiddenCharsRegex, "_");
+  async _createState(path: string, common: any, options: Options = {}): Promise<void> {
     await this.adapter
       .extendObjectAsync(path, {
         type: "state",
@@ -338,7 +341,7 @@ class Json2iob {
    * @param {object} options - The parsing options.
    * @returns {Promise<void>} - A promise that resolves when the array extraction and parsing is complete.
    */
-  async _extractArray(element: any, key: string, path: string, options: Options) {
+  async _extractArray(element: any, key: string, path: string, options: Options): Promise<void> {
     try {
       if (key) {
         element = element[key];
@@ -349,10 +352,11 @@ class Json2iob {
           this.adapter.log.debug("Cannot extract empty: " + path + "." + key + "." + index);
           continue;
         }
-        // @ts-ignore
-        index = parseInt(index) + 1;
-        // @ts-ignore
-        if (index < 10) {
+        
+        let indexNumber = parseInt(index) + 1;
+        index = indexNumber.toString();
+
+        if (indexNumber < 10) {
           index = "0" + index;
         }
         if (options.autoCast && typeof arrayElement === "string" && this._isJsonString(arrayElement)) {
@@ -439,6 +443,17 @@ class Json2iob {
         }
 
         if (options.forceIndex) {
+          if (options.zeroBasedArrayIndex === true) {
+            indexNumber -= 1;
+          }
+
+          if (options.disablePadIndex) {
+            index = indexNumber.toString();
+          }  else {
+            // reassign index in case zeroBasedarrayIndex is enabled
+            index = `${indexNumber < 10 ? "0" : ""}${indexNumber}`;
+          }
+
           arrayPath = key + index;
         }
         //special case array with 2 string objects
@@ -521,7 +536,7 @@ class Json2iob {
    * @param {string} str - The string to be checked.
    * @returns {boolean} - Returns true if the string is a valid base64 encoded string, otherwise returns false.
    */
-  _isBase64(str: string) {
+  _isBase64(str: string): boolean {
     if (!str || typeof str !== "string") {
       return false;
     }
@@ -534,7 +549,7 @@ class Json2iob {
    * @param {string} str - The string to be checked.
    * @returns {boolean} - Returns true if the string is a valid JSON string, otherwise false.
    */
-  _isJsonString(str: string) {
+  _isJsonString(str: string): boolean {
     try {
       JSON.parse(str);
     } catch (e) {
@@ -548,7 +563,7 @@ class Json2iob {
    * @param {boolean} write - Indicates whether the element is being written to.
    * @returns {string} - The role of the element.
    */
-  _getRole(element: any, write: boolean) {
+  _getRole(element: any, write: boolean): "indicator" | "switch" | "value.time" | "value" | "level" | "text" | "state" {
     if (typeof element === "boolean" && !write) {
       return "indicator";
     }

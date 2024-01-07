@@ -1,6 +1,8 @@
 type Options = {
     write?: boolean;
     forceIndex?: boolean;
+    disablePadIndex?: boolean;
+    zeroBasedArrayIndex?: boolean;
     channelName?: string;
     preferedArrayName?: string;
     preferedArrayDesc?: string;
@@ -30,6 +32,8 @@ declare class Json2iob {
      * @param {Options} [options={}] - The parsing options.
      * @param {boolean} [options.write] - Activate write for all states.
      * @param {boolean} [options.forceIndex] - Instead of trying to find names for array entries, use the index as the name.
+     * @param {boolean} [options.disablePadIndex] - Disables padding of array index numbers if forceIndex = true
+     * @param {boolean} [options.zeroBasedArrayIndex] - Start array index from 0 if forceIndex = true
      * @param {string} [options.channelName] - Set name of the root channel.
      * @param {string} [options.preferedArrayName] - Set key to use this as an array entry name.
      * @param {string} [options.preferedArrayDesc] - Set key to use this as an array entry description.
