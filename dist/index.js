@@ -160,7 +160,7 @@ class Json2iob {
                     name = element[options.preferedArrayDesc];
                 }
                 await this.adapter
-                    .setObjectNotExistsAsync(path, {
+                    .extendObjectAsync(path, {
                     type: "channel",
                     common: {
                         name: name,
@@ -406,9 +406,9 @@ class Json2iob {
                     if (options.disablePadIndex) {
                         index = indexNumber.toString();
                     }
-                    else if (indexNumber < 10) {
+                    else {
                         // reassign index in case zeroBasedarrayIndex is enabled
-                        index = `0${indexNumber}`;
+                        index = `${indexNumber < 10 ? "0" : ""}${indexNumber}`;
                     }
                     arrayPath = key + index;
                 }
@@ -519,6 +519,9 @@ class Json2iob {
         if (typeof element === "number" && !write) {
             if (element && element.toString().length === 13) {
                 if (element > 1500000000000 && element < 2000000000000) {
+                    return "value.time";
+                }
+                if (element > 1500000000 && element < 2000000000) {
                     return "value.time";
                 }
             }

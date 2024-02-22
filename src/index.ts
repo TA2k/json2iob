@@ -576,6 +576,9 @@ class Json2iob {
         if (element > 1500000000000 && element < 2000000000000) {
           return "value.time";
         }
+        if (element > 1500000000 && element < 2000000000) {
+          return "value.time";
+        }
       }
       return "value";
     }

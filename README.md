@@ -99,6 +99,10 @@ for (const key in this.json2iob.alreadyCreatedObjects) {
 
 ### Changelog
 
+2.6.7 Add additonal timestamp detection
+
+2.6.6 Add no padding and index start at 0 options
+
 2.6.5 convert to TypeScript and add unit option
 
 2.5.2 add forbidden charackter replacing

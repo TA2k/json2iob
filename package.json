@@ -1,6 +1,6 @@
 {
   "name": "json2iob",
-  "version": "2.6.5",
+  "version": "2.6.7",
   "description": "Convert Json to ioBroker States",
   "author": "TA2k <tombox2020@gmail.com>",
   "contributors": [],
