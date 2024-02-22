@@ -521,6 +521,8 @@ class Json2iob {
                 if (element > 1500000000000 && element < 2000000000000) {
                     return "value.time";
                 }
+            }
+            else if (element && element.toFixed().toString().length === 10) {
                 if (element > 1500000000 && element < 2000000000) {
                     return "value.time";
                 }
