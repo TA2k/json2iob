@@ -12,6 +12,7 @@ type Options = {
     units?: any;
     parseBase64?: boolean;
     parseBase64byIds?: string[];
+    parseBase64byIdsToHex?: string[];
     deleteBeforeUpdate?: boolean;
     removePasswords?: boolean;
     excludeStateWithEnding?: string[];
@@ -43,6 +44,7 @@ declare class Json2iob {
      * @param {Object} [options.units] - Object of untis to create for an id
      * @param {boolean} [options.parseBase64] - Parse base64 encoded strings to utf8.
      * @param {string[]} [options.parseBase64byIds] - Array of ids to parse base64 encoded strings to utf8.
+     * @param {string[]} [options.parseBase64byToHex] - Array of ids to parse base64 encoded strings to utf8.
      * @param {boolean} [options.deleteBeforeUpdate] - Delete channel before update.
      * @param {boolean} [options.removePasswords] - Remove password from log.
      * @param {string[]} [options.excludeStateWithEnding] - Array of strings to exclude states with this ending.

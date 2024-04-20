@@ -14,6 +14,7 @@ type Options = {
   units?: any;
   parseBase64?: boolean;
   parseBase64byIds?: string[];
+  parseBase64byIdsToHex?: string[];
   deleteBeforeUpdate?: boolean;
   removePasswords?: boolean;
   excludeStateWithEnding?: string[];
@@ -68,6 +69,7 @@ class Json2iob {
    * @param {Object} [options.units] - Object of untis to create for an id
    * @param {boolean} [options.parseBase64] - Parse base64 encoded strings to utf8.
    * @param {string[]} [options.parseBase64byIds] - Array of ids to parse base64 encoded strings to utf8.
+   * @param {string[]} [options.parseBase64byToHex] - Array of ids to parse base64 encoded strings to utf8.
    * @param {boolean} [options.deleteBeforeUpdate] - Delete channel before update.
    * @param {boolean} [options.removePasswords] - Remove password from log.
    * @param {string[]} [options.excludeStateWithEnding] - Array of strings to exclude states with this ending.
@@ -85,10 +87,14 @@ class Json2iob {
 
       if (
         (options.parseBase64 && this._isBase64(element)) ||
-        (options.parseBase64byIds && options.parseBase64byIds.includes(path))
+        (options.parseBase64byIds && options.parseBase64byIds.includes(path)) ||
+        (options.parseBase64byIdsToHex && options.parseBase64byIdsToHex.includes(path))
       ) {
         try {
           element = Buffer.from(element, "base64").toString("utf8");
+          if (options.parseBase64byIdsToHex && options.parseBase64byIdsToHex.includes(path)) {
+            element = Buffer.from(element, "base64").toString("hex");
+          }
           if (this._isJsonString(element)) {
             element = JSONbig.parse(element);
           }
@@ -240,10 +246,14 @@ class Json2iob {
 
         if (
           (options.parseBase64 && this._isBase64(element[key])) ||
-          (options.parseBase64byIds && options.parseBase64byIds.includes(key))
+          (options.parseBase64byIds && options.parseBase64byIds.includes(key)) ||
+          (options.parseBase64byIdsToHex && options.parseBase64byIdsToHex.includes(key))
         ) {
           try {
             element[key] = Buffer.from(element[key], "base64").toString("utf8");
+            if (options.parseBase64byIdsToHex && options.parseBase64byIdsToHex.includes(key)) {
+              element[key] = Buffer.from(element[key], "base64").toString("hex");
+            }
             if (this._isJsonString(element[key])) {
               element[key] = JSONbig.parse(element[key]);
             }
@@ -472,10 +482,14 @@ class Json2iob {
 
           if (
             (options.parseBase64 && this._isBase64(subValue)) ||
-            (options.parseBase64byIds && options.parseBase64byIds.includes(subKey))
+            (options.parseBase64byIds && options.parseBase64byIds.includes(subKey)) ||
+            (options.parseBase64byIdsToHex && options.parseBase64byIdsToHex.includes(subKey))
           ) {
             try {
               subValue = Buffer.from(subValue, "base64").toString("utf8");
+              if (options.parseBase64byIdsToHex && options.parseBase64byIdsToHex.includes(subKey)) {
+                subValue = Buffer.from(subValue, "base64").toString("hex");
+              }
               if (this._isJsonString(subValue)) {
                 subValue = JSONbig.parse(subValue);
               }

@@ -44,6 +44,8 @@ parseBase64: (true false) // parse base64 encoded strings to utf8
 
 parseBase64byIds: //Array of ids to parse base64 encoded strings to utf8
 
+parseBase64byIdsToHex : //Array of ids to parse base64 encoded strings to hex
+
 deleteBeforeUpdate: //Delete channel before update,
 
 removePasswords: // remove the values from password keys
@@ -98,6 +100,8 @@ for (const key in this.json2iob.alreadyCreatedObjects) {
 ```
 
 ### Changelog
+
+2.6.10 Add base64toHex
 
 2.6.8 Add additonal timestamp detection
 
