@@ -380,7 +380,7 @@ class Json2iob {
         }
         let arrayPath = key + index;
         if (typeof arrayElement === "string" && key !== "") {
-          await this.parse(path + "." + key + "." + arrayElement, arrayElement, options);
+          await this.parse(path + "." + key + "." + arrayPath, arrayElement, options);
           continue;
         }
         if (typeof arrayElement[Object.keys(arrayElement)[0]] === "string") {
