@@ -101,7 +101,9 @@ for (const key in this.json2iob.alreadyCreatedObjects) {
 
 ### Changelog
 
-2.6.10 Add base64toHex
+2.6.12 fix for empty ids
+
+2.6.11 Add base64toHex
 
 2.6.8 Add additonal timestamp detection
 

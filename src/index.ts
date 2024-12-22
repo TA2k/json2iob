@@ -91,13 +91,14 @@ class Json2iob {
         (options.parseBase64byIdsToHex && options.parseBase64byIdsToHex.includes(path))
       ) {
         try {
-          element = Buffer.from(element, "base64").toString("utf8");
+          let value = Buffer.from(element, "base64").toString("utf8");
           if (options.parseBase64byIdsToHex && options.parseBase64byIdsToHex.includes(path)) {
-            element = Buffer.from(element, "base64").toString("hex");
+            value = Buffer.from(element, "base64").toString("hex");
           }
           if (this._isJsonString(element)) {
-            element = JSONbig.parse(element);
+            value = JSONbig.parse(element);
           }
+          element = value;
         } catch (error) {
           this.adapter.log.warn(`Cannot parse base64 for ${path}: ${error}`);
         }
@@ -250,13 +251,14 @@ class Json2iob {
           (options.parseBase64byIdsToHex && options.parseBase64byIdsToHex.includes(key))
         ) {
           try {
-            element[key] = Buffer.from(element[key], "base64").toString("utf8");
+            let value = Buffer.from(element[key], "base64").toString("utf8");
             if (options.parseBase64byIdsToHex && options.parseBase64byIdsToHex.includes(key)) {
-              element[key] = Buffer.from(element[key], "base64").toString("hex");
+              value = Buffer.from(element[key], "base64").toString("hex");
             }
             if (this._isJsonString(element[key])) {
-              element[key] = JSONbig.parse(element[key]);
+              value = JSONbig.parse(element[key]);
             }
+            element[key] = value;
           } catch (error) {
             this.adapter.log.warn(`Cannot parse base64 for ${path + "." + key}: ${error}`);
           }
@@ -486,21 +488,23 @@ class Json2iob {
             (options.parseBase64byIdsToHex && options.parseBase64byIdsToHex.includes(subKey))
           ) {
             try {
-              subValue = Buffer.from(subValue, "base64").toString("utf8");
+              let value = Buffer.from(subValue, "base64").toString("utf8");
               if (options.parseBase64byIdsToHex && options.parseBase64byIdsToHex.includes(subKey)) {
-                subValue = Buffer.from(subValue, "base64").toString("hex");
+                value = Buffer.from(subValue, "base64").toString("hex");
               }
               if (this._isJsonString(subValue)) {
-                subValue = JSONbig.parse(subValue);
+                value = JSONbig.parse(subValue);
               }
+              subValue = value;
             } catch (error) {
               this.adapter.log.warn(`Cannot parse base64 value ${subValue} for ${path + "." + subKey}: ${error}`);
             }
           }
 
           const subName = Object.keys(arrayElement)[0] + " " + Object.keys(arrayElement)[1];
+
           if (key) {
-            subKey = key + "." + subKey;
+            subKey = key + "." + (subKey || Object.keys(arrayElement)[0]);
           }
           if (
             !this.alreadyCreatedObjects[path + "." + subKey] ||

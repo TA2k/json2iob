@@ -1,6 +1,6 @@
 {
   "name": "json2iob",
-  "version": "2.6.10",
+  "version": "2.6.12",
   "description": "Convert Json to ioBroker States",
   "author": "TA2k <tombox2020@gmail.com>",
   "contributors": [],
@@ -13,7 +13,8 @@
   ],
   "scripts": {
     "build": "tsc",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -26,6 +27,7 @@
   "devDependencies": {
     "@tsconfig/node16": "^16.1.1",
     "@types/node": "^16.18.68",
+    "jest": "^29.7.0",
     "typescript": "^5.3.3"
   },
   "bugs": {
