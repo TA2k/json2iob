@@ -333,6 +333,16 @@ class Json2iob {
                 }
                 let arrayPath = key + index;
                 if (typeof arrayElement === "string" && key !== "") {
+                    //create channel
+                    await this.adapter.extendObjectAsync(path + "." + key, {
+                        type: "channel",
+                        common: {
+                            name: key,
+                            write: false,
+                            read: true,
+                        },
+                        native: {},
+                    }, options);
                     await this.parse(path + "." + key + "." + arrayElement.replace(/\./g, ""), arrayElement, options);
                     continue;
                 }
@@ -431,6 +441,16 @@ class Json2iob {
                     typeof arrayElement[Object.keys(arrayElement)[0]] !== "object" &&
                     typeof arrayElement[Object.keys(arrayElement)[1]] !== "object" &&
                     arrayElement[Object.keys(arrayElement)[0]] !== "null") {
+                    //create channel
+                    await this.adapter.extendObjectAsync(path + "." + key, {
+                        type: "channel",
+                        common: {
+                            name: key,
+                            write: false,
+                            read: true,
+                        },
+                        native: {},
+                    }, options);
                     let subKey = arrayElement[Object.keys(arrayElement)[0]];
                     let subValue = arrayElement[Object.keys(arrayElement)[1]];
                     if ((options.parseBase64 && this._isBase64(subValue)) ||
