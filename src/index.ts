@@ -566,8 +566,8 @@ class Json2iob {
               read: true,
               states: states,
             };
-            if (options.units && options.units[subKey]) {
-              common.unit = options.units[subKey];
+            if (options.units && options.units[subKey.split(".").pop()]) {
+              common.unit = options.units[subKey.split(".").pop()];
             }
             await this._createState(path + "." + subKey, common, options);
           }
