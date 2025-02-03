@@ -488,8 +488,12 @@ class Json2iob {
                                 states[subValue] = subValue;
                             }
                         }
+                        let name = subName;
+                        if (options.descriptions && options.descriptions[subKey.split(".").pop()]) {
+                            name = options.descriptions[subKey.split(".").pop()];
+                        }
                         const common = {
-                            name: subName,
+                            name: name,
                             role: this._getRole(subValue, options.write || false),
                             type: type,
                             write: options.write,
