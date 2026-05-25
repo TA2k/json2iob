@@ -91,6 +91,13 @@ declare class Json2iob {
      */
     parse(path: string, element: any, options?: Options): Promise<void>;
     /**
+     * Looks up a role override by trying multiple candidate keys in order.
+     * @param {any} roles - The roles map.
+     * @param {(string|undefined)[]} candidates - Possible keys to try (e.g. full path, leaf, JSON key).
+     * @returns {string|undefined} - The first matching role or undefined.
+     */
+    _lookupRole(roles: any, candidates: (string | undefined)[]): string | undefined;
+    /**
      * Creates a state object in the adapter's namespace.
      * @param {string} path - The path of the state object.
      * @param {object} common - The common object for the state.

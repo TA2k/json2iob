@@ -105,6 +105,8 @@ for (const key in this.json2iob.alreadyCreatedObjects) {
 ```
 
 ### Changelog
+2.6.24 roles option also matches by leaf path part and by the original JSON key in 2-string-array special case
+
 2.6.23 channelName accepts custom common object (multilingual name, role, icon, desc, ...) and add roles option for state-level role override
 
 2.6.22 add previousData option to improve performance for unchanged data

@@ -239,8 +239,9 @@ class Json2iob {
           if (options.units && options.units[path]) {
             common.unit = options.units[path];
           }
-          if (options.roles && options.roles[statesKey]) {
-            common.role = options.roles[statesKey];
+          if (options.roles) {
+            const role = this._lookupRole(options.roles, [statesKey, statesKey.split(".").pop()]);
+            if (role) common.role = role;
           }
           await this._createState(path, common, options);
         }
@@ -431,8 +432,9 @@ class Json2iob {
             if (options.units && options.units[key]) {
               common.unit = options.units[key]; // Assign the value to the 'unit' property
             }
-            if (options.roles && options.roles[statesKey]) {
-              common.role = options.roles[statesKey];
+            if (options.roles) {
+              const role = this._lookupRole(options.roles, [statesKey, statesKey.split(".").pop(), key]);
+              if (role) common.role = role;
             }
             await this._createState(path + "." + pathKey, common, options);
           }
@@ -446,6 +448,20 @@ class Json2iob {
       this.adapter.log.error(error);
     }
   }
+  /**
+   * Looks up a role override by trying multiple candidate keys in order.
+   * @param {any} roles - The roles map.
+   * @param {(string|undefined)[]} candidates - Possible keys to try (e.g. full path, leaf, JSON key).
+   * @returns {string|undefined} - The first matching role or undefined.
+   */
+  _lookupRole(roles: any, candidates: (string | undefined)[]): string | undefined {
+    if (!roles) return undefined;
+    for (const c of candidates) {
+      if (c && roles[c]) return roles[c];
+    }
+    return undefined;
+  }
+
   /**
    * Creates a state object in the adapter's namespace.
    * @param {string} path - The path of the state object.
@@ -724,8 +740,16 @@ class Json2iob {
             if (options.units && options.units[subKey.split(".").pop()]) {
               common.unit = options.units[subKey.split(".").pop()];
             }
-            if (options.roles && options.roles[statesKey]) {
-              common.role = options.roles[statesKey];
+            if (options.roles) {
+              // Two-string-array special case: lookup by state-name leaf (subKey),
+              // by the original second JSON key (semantic key like "value"),
+              // and by the full statesKey for completeness.
+              const role = this._lookupRole(options.roles, [
+                statesKey,
+                subKey.split(".").pop(),
+                Object.keys(arrayElement)[1],
+              ]);
+              if (role) common.role = role;
             }
             await this._createState(path + "." + subKey, common, options);
           }
