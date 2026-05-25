@@ -12,6 +12,107 @@ exports[`Json2iob should correctly parse JSON 1`] = `
     "native": {},
     "type": "channel",
   },
+  "test.Please add washer fluid": {
+    "common": {
+      "name": "",
+      "read": true,
+      "write": false,
+    },
+    "id": "test.Please add washer fluid",
+    "native": {},
+    "type": "channel",
+  },
+  "test.Please add washer fluid.category": {
+    "common": {
+      "name": "category",
+      "read": true,
+      "role": "text",
+      "states": undefined,
+      "type": "string",
+      "write": true,
+    },
+    "id": "test.Please add washer fluid.category",
+    "native": {},
+    "type": "state",
+  },
+  "test.Please add washer fluid.icon": {
+    "common": {
+      "name": "icon",
+      "read": true,
+      "role": "text",
+      "states": undefined,
+      "type": "string",
+      "write": true,
+    },
+    "id": "test.Please add washer fluid.icon",
+    "native": {},
+    "type": "state",
+  },
+  "test.Please add washer fluid.iconColor": {
+    "common": {
+      "name": "iconColor",
+      "read": true,
+      "role": "text",
+      "states": undefined,
+      "type": "string",
+      "write": true,
+    },
+    "id": "test.Please add washer fluid.iconColor",
+    "native": {},
+    "type": "state",
+  },
+  "test.Please add washer fluid.priority": {
+    "common": {
+      "name": "priority",
+      "read": true,
+      "role": "level",
+      "states": undefined,
+      "type": "number",
+      "write": true,
+    },
+    "id": "test.Please add washer fluid.priority",
+    "native": {},
+    "type": "state",
+  },
+  "test.Please add washer fluid.priorityGroup": {
+    "common": {
+      "name": "priorityGroup",
+      "read": true,
+      "role": "level",
+      "states": undefined,
+      "type": "number",
+      "write": true,
+    },
+    "id": "test.Please add washer fluid.priorityGroup",
+    "native": {},
+    "type": "state",
+  },
+  "test.Please add washer fluid.serviceLead": {
+    "common": {
+      "name": "serviceLead",
+      "read": true,
+      "role": "switch",
+      "states": undefined,
+      "type": "boolean",
+      "write": true,
+    },
+    "id": "test.Please add washer fluid.serviceLead",
+    "native": {},
+    "type": "state",
+  },
+  "test.Please add washer fluid.text": {
+    "common": {
+      "name": "text",
+      "read": true,
+      "role": "text",
+      "states": undefined,
+      "type": "string",
+      "write": true,
+    },
+    "id": "test.Please add washer fluid.text",
+    "native": {},
+    "type": "state",
+  },
   "test.addresses": {
     "common": {
       "name": "addresses",
@@ -179,16 +280,6 @@ exports[`Json2iob should correctly parse JSON 1`] = `
     "native": {},
     "type": "channel",
   },
-  "test.nestedList01.": {
-    "common": {
-      "name": "",
-      "read": true,
-      "write": false,
-    },
-    "id": "test.nestedList01.",
-    "native": {},
-    "type": "channel",
-  },
   "test.nestedList01.789": {
     "common": {
       "name": "id name",
@@ -209,16 +300,6 @@ exports[`Json2iob should correctly parse JSON 1`] = `
       "write": false,
     },
     "id": "test.nestedList02",
-    "native": {},
-    "type": "channel",
-  },
-  "test.nestedList02.": {
-    "common": {
-      "name": "",
-      "read": true,
-      "write": false,
-    },
-    "id": "test.nestedList02.",
     "native": {},
     "type": "channel",
   },
@@ -248,11 +329,38 @@ exports[`Json2iob should correctly parse JSON 1`] = `
     "native": {},
     "type": "state",
   },
+  "test.path_data01": {
+    "common": {
+      "name": "",
+      "read": true,
+      "write": false,
+    },
+    "id": "test.path_data01",
+    "native": {},
+    "type": "channel",
+  },
+  "test.path_data02": {
+    "common": {
+      "name": "",
+      "read": true,
+      "write": false,
+    },
+    "id": "test.path_data02",
+    "native": {},
+    "type": "channel",
+  },
 }
 `;
 
 exports[`Json2iob should correctly parse JSON 2`] = `
 {
+  "test.Please add washer fluid.category": "other",
+  "test.Please add washer fluid.icon": "data:image/png;base64,iVB",
+  "test.Please add washer fluid.iconColor": "yellow",
+  "test.Please add washer fluid.priority": 125,
+  "test.Please add washer fluid.priorityGroup": 0,
+  "test.Please add washer fluid.serviceLead": false,
+  "test.Please add washer fluid.text": "Please add washer fluid.",
   "test.addresses.102423745": "10.24.237.45",
   "test.addresses.fd7a:115d:f34e::b347:019a": "fd7a:115d:f34e::b347:019a",
   "test.blocksIncomingConnections": false,

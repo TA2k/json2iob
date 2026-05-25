@@ -30,7 +30,10 @@ preferedArrayName //set key to use this as an array entry name
 
 preferedArrayDec //set key to use this as an array entry description
 
-channelName //set name of the root channel
+channelName //set the root channel. Either:
+//  - a string (used as common.name)
+//  - a multilingual name object: { en, de, ru, pt, nl, fr, it, es, pl, uk, "zh-cn" }
+//  - a full custom common object (e.g. { name: {en:"X",de:"Y"}, role: "info.module", icon: "...", desc: "..." }) which is spread into the channel's common
 
 autoCast (true false) // make JSON.parse on all values to parse numbers correctly
 
@@ -39,6 +42,8 @@ descriptions: //Object of names for state keys
 states: // Object of states to create for an id, new entries via json will be added automatically to the states
 
 units: // Object of units to create for an id.
+
+roles: // Object of roles to override automatic role detection per id (same key lookup as units/descriptions).
 
 parseBase64: (true false) // parse base64 encoded strings to utf8
 
@@ -100,6 +105,19 @@ for (const key in this.json2iob.alreadyCreatedObjects) {
 ```
 
 ### Changelog
+2.6.23 channelName accepts custom common object (multilingual name, role, icon, desc, ...) and add roles option for state-level role override
+
+2.6.22 add previousData option to improve performance for unchanged data
+
+2.6.21 fix jsonbig large numbers to objects
+
+2.6.20 fix description
+
+2.6.19 reduce mixed logging
+
+2.6.18 add useCompletePathForDescriptionsAndStates
+
+2.6.17 check type before parse base64
 
 2.6.16 fix unit name for 2 values in arrrays
 2.6.15 fix description name for 2 values in arrrays

@@ -12,5 +12,21 @@
   "advertisedRoutes": [],
   "clientConnectivity": {
     "endpoints": ["10.10.179.29:133", "192.168.20.28:133", "[b8b0:59f:9fb6:5b2a:2091:f593:bdae:308]:133"]
-  }
+  },
+  "path_data": [
+    [[0.5198, 0.2176], 1746558186.813059],
+    [[0.5193, 0.2019], 1746558186.815497]
+  ],
+
+  "statuses": [
+    {
+      "text": "Please add washer fluid.",
+      "category": "other",
+      "priority": 125,
+      "priorityGroup": 0,
+      "icon": "data:image/png;base64,iVB",
+      "iconColor": "yellow",
+      "serviceLead": false
+    }
+  ]
 }

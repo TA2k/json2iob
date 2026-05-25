@@ -21,6 +21,32 @@ class Json2iob {
         }
     }
     /**
+     * Gets a value from previousData by path and compares it to the new value.
+     * @param {string} path - The state path.
+     * @param {any} newValue - The new value to set.
+     * @param {Options} options - The options containing previousData and _rootPath.
+     * @returns {boolean} - Returns true if the value has changed or previousData is not provided.
+     */
+    _hasValueChanged(path, newValue, options) {
+        if (!options.previousData) {
+            return true;
+        }
+        // Strip the root path prefix to get relative path within previousData
+        let relativePath = path;
+        if (options._rootPath && path.startsWith(options._rootPath + ".")) {
+            relativePath = path.substring(options._rootPath.length + 1);
+        }
+        const pathParts = relativePath.split(".");
+        let current = options.previousData;
+        for (const part of pathParts) {
+            if (current === undefined || current === null || typeof current !== "object") {
+                return true;
+            }
+            current = current[part];
+        }
+        return current !== newValue;
+    }
+    /**
      * Parses the given element and creates states in the adapter based on the element's structure.
      * @method parse
      * @param {string} path - The ioBroker object path which the element should be saved to.
@@ -30,13 +56,14 @@ class Json2iob {
      * @param {boolean} [options.forceIndex] - Instead of trying to find names for array entries, use the index as the name.
      * @param {boolean} [options.disablePadIndex] - Disables padding of array index numbers if forceIndex = true
      * @param {boolean} [options.zeroBasedArrayIndex] - Start array index from 0 if forceIndex = true
-     * @param {string} [options.channelName] - Set name of the root channel.
+     * @param {string|object} [options.channelName] - Set the root channel. Either a string (used as common.name), a multilingual name object ({en, de, ru, pt, nl, fr, it, es, pl, uk, "zh-cn"}), or a full custom common object (with name, role, icon, desc, ... — spread into the channel's common).
      * @param {string} [options.preferedArrayName] - Set key to use this as an array entry name.
      * @param {string} [options.preferedArrayDesc] - Set key to use this as an array entry description.
      * @param {boolean} [options.autoCast] - Make JSON.parse to parse numbers correctly.
      * @param {Object} [options.descriptions] - Object of names for state keys.
      * @param {Object} [options.states] - Object of states to create for an id, new entries via json will be added automatically to the states.
      * @param {Object} [options.units] - Object of untis to create for an id
+     * @param {Object} [options.roles] - Object of roles to override automatic role detection per id.
      * @param {boolean} [options.parseBase64] - Parse base64 encoded strings to utf8.
      * @param {string[]} [options.parseBase64byIds] - Array of ids to parse base64 encoded strings to utf8.
      * @param {string[]} [options.parseBase64byToHex] - Array of ids to parse base64 encoded strings to utf8.
@@ -45,6 +72,8 @@ class Json2iob {
      * @param {string[]} [options.excludeStateWithEnding] - Array of strings to exclude states with this ending.
      * @param {string[]} [options.makeStateWritableWithEnding] - Array of strings to make states with this ending writable.
      * @param {boolean} [options.dontSaveCreatedObjects] - Create objects but do not save them to alreadyCreatedObjects.
+     * @param {boolean} [options.useCompletePathForDescriptionsAndStates] - Use complete path for descriptions and states, not only last part.
+     * @param {any} [options.previousData] - Previous data object to compare against. Only setState when value changed.
      * @returns {Promise<void>} - A promise that resolves when the parsing is complete.
      */
     async parse(path, element, options = { write: false }) {
@@ -53,18 +82,25 @@ class Json2iob {
                 this.adapter.log.debug("Cannot extract empty: " + path);
                 return;
             }
+            // Set root path for previousData comparison on first call
+            if (options.previousData && !options._rootPath) {
+                options._rootPath = path;
+            }
             if ((options.parseBase64 && this._isBase64(element)) ||
                 (options.parseBase64byIds && options.parseBase64byIds.includes(path)) ||
                 (options.parseBase64byIdsToHex && options.parseBase64byIdsToHex.includes(path))) {
                 try {
-                    let value = Buffer.from(element, "base64").toString("utf8");
-                    if (options.parseBase64byIdsToHex && options.parseBase64byIdsToHex.includes(path)) {
-                        value = Buffer.from(element, "base64").toString("hex");
+                    //check for string
+                    if (typeof element === "string") {
+                        let value = Buffer.from(element, "base64").toString("utf8");
+                        if (options.parseBase64byIdsToHex && options.parseBase64byIdsToHex.includes(path)) {
+                            value = Buffer.from(element, "base64").toString("hex");
+                        }
+                        if (this._isJsonString(element)) {
+                            value = json_bigint_1.default.parse(element);
+                        }
+                        element = value;
                     }
-                    if (this._isJsonString(element)) {
-                        value = json_bigint_1.default.parse(element);
-                    }
-                    element = value;
                 }
                 catch (error) {
                     this.adapter.log.warn(`Cannot parse base64 for ${path}: ${error}`);
@@ -106,11 +142,17 @@ class Json2iob {
                     let type = element !== null ? typeof element : "mixed";
                     if (this.objectTypes[path] && this.objectTypes[path] !== typeof element) {
                         type = "mixed";
-                        this.adapter.log.debug(`Type changed for ${path} from ${this.objectTypes[path]} to ${type}`);
+                        if (this.objectTypes[path] !== "mixed") {
+                            this.adapter.log.debug(`Type changed for ${path} from ${this.objectTypes[path]} to ${type}`);
+                        }
                     }
                     let states;
-                    if (options.states && options.states[path]) {
-                        states = options.states[path];
+                    let statesKey = lastPathElement || path;
+                    if (options.useCompletePathForDescriptionsAndStates) {
+                        statesKey = path;
+                    }
+                    if (options.states && options.states[statesKey]) {
+                        states = options.states[statesKey];
                         if (!states[element]) {
                             states[element] = element;
                         }
@@ -126,9 +168,14 @@ class Json2iob {
                     if (options.units && options.units[path]) {
                         common.unit = options.units[path];
                     }
+                    if (options.roles && options.roles[statesKey]) {
+                        common.role = options.roles[statesKey];
+                    }
                     await this._createState(path, common, options);
                 }
-                await this.adapter.setStateAsync(path, element, true);
+                if (this._hasValueChanged(path, element, options)) {
+                    await this.adapter.setStateAsync(path, element, true);
+                }
                 return;
             }
             if (options.removePasswords && path.toString().toLowerCase().includes("password")) {
@@ -161,18 +208,43 @@ class Json2iob {
                     }
                     await this.adapter.delObjectAsync(path, { recursive: true });
                 }
-                let name = options.channelName || "";
+                let channelCommon = { name: "", write: false, read: true };
+                const cn = options.channelName;
+                if (typeof cn === "string") {
+                    channelCommon.name = cn;
+                }
+                else if (cn && typeof cn === "object") {
+                    const isFullCommon = "name" in cn || "role" in cn || "desc" in cn || "icon" in cn || "type" in cn;
+                    if (isFullCommon) {
+                        channelCommon = { write: false, read: true, ...cn };
+                    }
+                    else {
+                        channelCommon.name = cn;
+                    }
+                }
+                if (options && options.descriptions) {
+                    const pathArray = path.split(".");
+                    const completePath = pathArray.join(".");
+                    const pathMinusFirst = pathArray.slice(1).join(".");
+                    const pathMinuseTwo = pathArray.slice(2).join(".");
+                    const descName = options.descriptions[completePath] ||
+                        options.descriptions[pathMinusFirst] ||
+                        options.descriptions[pathMinuseTwo];
+                    if (descName) {
+                        channelCommon.name = descName;
+                    }
+                }
                 if (options.preferedArrayDesc && element[options.preferedArrayDesc]) {
-                    name = element[options.preferedArrayDesc];
+                    channelCommon.name = element[options.preferedArrayDesc];
+                }
+                //remove ending . from key
+                if (path.endsWith(".")) {
+                    path = path.slice(0, -1);
                 }
                 await this.adapter
                     .extendObjectAsync(path, {
                     type: "channel",
-                    common: {
-                        name: name,
-                        write: false,
-                        read: true,
-                    },
+                    common: channelCommon,
                     native: {},
                 })
                     .then(() => {
@@ -203,7 +275,13 @@ class Json2iob {
                     element[key] = "";
                 }
                 if (this._isJsonString(element[key]) && options.autoCast) {
-                    element[key] = json_bigint_1.default.parse(element[key]);
+                    element[key] = json_bigint_1.default.parse(element[key], (key, value) => {
+                        // Convert BigNumber objects to regular numbers to fix GPS coordinate parsing
+                        if (typeof value === 'object' && value && value.constructor && value.constructor.name === 'BigNumber') {
+                            return parseFloat(value.toString());
+                        }
+                        return value;
+                    });
                 }
                 if ((options.parseBase64 && this._isBase64(element[key])) ||
                     (options.parseBase64byIds && options.parseBase64byIds.includes(key)) ||
@@ -233,8 +311,12 @@ class Json2iob {
                     if (!this.alreadyCreatedObjects[path + "." + pathKey] ||
                         this.objectTypes[path + "." + pathKey] !== typeof element[key]) {
                         let objectName = key;
-                        if (options.descriptions && options.descriptions[key]) {
-                            objectName = options.descriptions[key];
+                        let descriptionKey = key;
+                        if (options.useCompletePathForDescriptionsAndStates) {
+                            descriptionKey = path + "." + pathKey;
+                        }
+                        if (options.descriptions && options.descriptions[descriptionKey]) {
+                            objectName = options.descriptions[descriptionKey];
                         }
                         let type = element[key] !== null ? typeof element[key] : "mixed";
                         if (this.objectTypes[path + "." + pathKey] &&
@@ -243,8 +325,12 @@ class Json2iob {
                             this.adapter.log.debug(`Type changed for ${path + "." + pathKey} from ${this.objectTypes[path + "." + pathKey]} to ${type}`);
                         }
                         let states;
-                        if (options.states && options.states[key]) {
-                            states = options.states[key];
+                        let statesKey = key;
+                        if (options.useCompletePathForDescriptionsAndStates) {
+                            statesKey = path + "." + pathKey;
+                        }
+                        if (options.states && options.states[statesKey]) {
+                            states = options.states[statesKey];
                             if (!states[element[key]]) {
                                 states[element[key]] = element[key];
                             }
@@ -260,9 +346,14 @@ class Json2iob {
                         if (options.units && options.units[key]) {
                             common.unit = options.units[key]; // Assign the value to the 'unit' property
                         }
+                        if (options.roles && options.roles[statesKey]) {
+                            common.role = options.roles[statesKey];
+                        }
                         await this._createState(path + "." + pathKey, common, options);
                     }
-                    await this.adapter.setStateAsync(path + "." + pathKey, element[key], true);
+                    if (this._hasValueChanged(path + "." + pathKey, element[key], options)) {
+                        await this.adapter.setStateAsync(path + "." + pathKey, element[key], true);
+                    }
                 }
             }
         }
@@ -324,7 +415,13 @@ class Json2iob {
                 }
                 if (options.autoCast && typeof arrayElement === "string" && this._isJsonString(arrayElement)) {
                     try {
-                        element[index] = json_bigint_1.default.parse(arrayElement);
+                        element[index] = json_bigint_1.default.parse(arrayElement, (key, value) => {
+                            // Convert BigNumber objects to regular numbers to fix GPS coordinate parsing
+                            if (typeof value === 'object' && value && value.constructor && value.constructor.name === 'BigNumber') {
+                                return parseFloat(value.toString());
+                            }
+                            return value;
+                        });
                         arrayElement = element[index];
                     }
                     catch (error) {
@@ -334,6 +431,10 @@ class Json2iob {
                 let arrayPath = key + index;
                 if (typeof arrayElement === "string" && key !== "") {
                     //create channel
+                    //remove ending . from key
+                    if (key.endsWith(".")) {
+                        key = key.slice(0, -1);
+                    }
                     await this.adapter.extendObjectAsync(path + "." + key, {
                         type: "channel",
                         common: {
@@ -348,6 +449,7 @@ class Json2iob {
                 }
                 if (typeof arrayElement[Object.keys(arrayElement)[0]] === "string") {
                     arrayPath = arrayElement[Object.keys(arrayElement)[0]];
+                    arrayPath = arrayPath.replace(this.forbiddenCharsRegex, "_");
                 }
                 for (const keyName of Object.keys(arrayElement)) {
                     if (keyName.endsWith("Id") && arrayElement[keyName] !== null) {
@@ -442,7 +544,12 @@ class Json2iob {
                     typeof arrayElement[Object.keys(arrayElement)[1]] !== "object" &&
                     arrayElement[Object.keys(arrayElement)[0]] !== "null") {
                     //create channel
-                    await this.adapter.extendObjectAsync(path + "." + key, {
+                    //check for empty key
+                    let completePath = path + "." + key;
+                    if (key === "") {
+                        completePath = path;
+                    }
+                    await this.adapter.extendObjectAsync(completePath, {
                         type: "channel",
                         common: {
                             name: key,
@@ -482,15 +589,23 @@ class Json2iob {
                             type = "mixed";
                         }
                         let states;
-                        if (options.states && options.states[subKey]) {
-                            states = options.states[subKey];
+                        let statesKey = subKey;
+                        if (options.useCompletePathForDescriptionsAndStates) {
+                            statesKey = path + "." + subKey;
+                        }
+                        if (options.states && options.states[statesKey]) {
+                            states = options.states[statesKey];
                             if (!states[subValue]) {
                                 states[subValue] = subValue;
                             }
                         }
                         let name = subName;
-                        if (options.descriptions && options.descriptions[subKey.split(".").pop()]) {
-                            name = options.descriptions[subKey.split(".").pop()];
+                        let descriptionKey = subKey.split(".").pop() || subName;
+                        if (options.useCompletePathForDescriptionsAndStates) {
+                            descriptionKey = path + "." + subKey;
+                        }
+                        if (options.descriptions && options.descriptions[descriptionKey]) {
+                            name = options.descriptions[descriptionKey];
                         }
                         const common = {
                             name: name,
@@ -503,9 +618,14 @@ class Json2iob {
                         if (options.units && options.units[subKey.split(".").pop()]) {
                             common.unit = options.units[subKey.split(".").pop()];
                         }
+                        if (options.roles && options.roles[statesKey]) {
+                            common.role = options.roles[statesKey];
+                        }
                         await this._createState(path + "." + subKey, common, options);
                     }
-                    await this.adapter.setStateAsync(path + "." + subKey, subValue, true);
+                    if (this._hasValueChanged(path + "." + subKey, subValue, options)) {
+                        await this.adapter.setStateAsync(path + "." + subKey, subValue, true);
+                    }
                     continue;
                 }
                 await this.parse(path + "." + arrayPath, arrayElement, options);
