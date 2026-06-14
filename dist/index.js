@@ -159,7 +159,7 @@ class Json2iob {
                     }
                     const common = {
                         name: lastPathElement,
-                        role: this._getRole(element, options.write || false),
+                        role: type === "mixed" ? "state" : this._getRole(element, options.write || false),
                         type: type,
                         write: options.write,
                         read: true,
@@ -339,7 +339,7 @@ class Json2iob {
                         }
                         const common = {
                             name: objectName,
-                            role: this._getRole(element[key], options.write || false),
+                            role: type === "mixed" ? "state" : this._getRole(element[key], options.write || false),
                             type: type,
                             write: options.write,
                             read: true,
@@ -628,7 +628,7 @@ class Json2iob {
                         }
                         const common = {
                             name: name,
-                            role: this._getRole(subValue, options.write || false),
+                            role: type === "mixed" ? "state" : this._getRole(subValue, options.write || false),
                             type: type,
                             write: options.write,
                             read: true,

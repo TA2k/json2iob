@@ -105,6 +105,8 @@ for (const key in this.json2iob.alreadyCreatedObjects) {
 ```
 
 ### Changelog
+2.6.25 use generic role "state" when type collapses to "mixed" (stable role across type changes); roles option override still wins; _lookupRole made private; .gitignore .DS_Store recursively
+
 2.6.24 roles option also matches by leaf path part and by the original JSON key in 2-string-array special case
 
 2.6.23 channelName accepts custom common object (multilingual name, role, icon, desc, ...) and add roles option for state-level role override

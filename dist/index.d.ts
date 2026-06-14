@@ -96,7 +96,7 @@ declare class Json2iob {
      * @param {(string|undefined)[]} candidates - Possible keys to try (e.g. full path, leaf, JSON key).
      * @returns {string|undefined} - The first matching role or undefined.
      */
-    _lookupRole(roles: any, candidates: (string | undefined)[]): string | undefined;
+    private _lookupRole;
     /**
      * Creates a state object in the adapter's namespace.
      * @param {string} path - The path of the state object.

@@ -230,7 +230,7 @@ class Json2iob {
 
           const common: iobCommon = {
             name: lastPathElement,
-            role: this._getRole(element, options.write || false),
+            role: type === "mixed" ? "state" : this._getRole(element, options.write || false),
             type: type,
             write: options.write,
             read: true,
@@ -422,7 +422,7 @@ class Json2iob {
 
             const common: iobCommon = {
               name: objectName,
-              role: this._getRole(element[key], options.write || false),
+              role: type === "mixed" ? "state" : this._getRole(element[key], options.write || false),
               type: type,
               write: options.write,
               read: true,
@@ -454,7 +454,7 @@ class Json2iob {
    * @param {(string|undefined)[]} candidates - Possible keys to try (e.g. full path, leaf, JSON key).
    * @returns {string|undefined} - The first matching role or undefined.
    */
-  _lookupRole(roles: any, candidates: (string | undefined)[]): string | undefined {
+  private _lookupRole(roles: any, candidates: (string | undefined)[]): string | undefined {
     if (!roles) return undefined;
     for (const c of candidates) {
       if (c && roles[c]) return roles[c];
@@ -731,7 +731,7 @@ class Json2iob {
             }
             const common: iobCommon = {
               name: name,
-              role: this._getRole(subValue, options.write || false),
+              role: type === "mixed" ? "state" : this._getRole(subValue, options.write || false),
               type: type,
               write: options.write,
               read: true,
