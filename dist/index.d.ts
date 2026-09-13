@@ -52,6 +52,14 @@ declare class Json2iob {
     private forbiddenCharsRegex;
     constructor(adapter: any);
     /**
+     * Clears the internal creation cache for a path and all of its children.
+     * Call this after manually deleting an object (e.g. via delObjectAsync) so that
+     * parse() recreates the object and its states on the next run.
+     * @param {string} [path] - Path to clear including all children below it. If omitted, the complete cache is cleared.
+     * @returns {void}
+     */
+    resetCache(path?: string): void;
+    /**
      * Gets a value from previousData by path and compares it to the new value.
      * @param {string} path - The state path.
      * @param {any} newValue - The new value to set.

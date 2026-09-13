@@ -97,14 +97,14 @@ await this.json2iob.parse(path, json, {
 
 ```javascript
 await this.delObjectAsync(id + ".clients", { recursive: true });
-for (const key in this.json2iob.alreadyCreatedObjects) {
-  if (key.startsWith(id + ".clients")) {
-    delete this.json2iob.alreadyCreatedObjects[key];
-  }
-}
+// Clear the creation cache for this path and all children so parse() recreates it.
+this.json2iob.resetCache(id + ".clients");
+// Call resetCache() without an argument to clear the complete cache.
 ```
 
 ### Changelog
+2.6.26 add resetCache(path) method to clear the creation cache after manual object deletion (also clears objectTypes, exact path/child match)
+
 2.6.25 use generic role "state" when type collapses to "mixed" (stable role across type changes); roles option override still wins; _lookupRole made private; .gitignore .DS_Store recursively
 
 2.6.24 roles option also matches by leaf path part and by the original JSON key in 2-string-array special case

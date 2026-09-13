@@ -21,6 +21,31 @@ class Json2iob {
         }
     }
     /**
+     * Clears the internal creation cache for a path and all of its children.
+     * Call this after manually deleting an object (e.g. via delObjectAsync) so that
+     * parse() recreates the object and its states on the next run.
+     * @param {string} [path] - Path to clear including all children below it. If omitted, the complete cache is cleared.
+     * @returns {void}
+     */
+    resetCache(path) {
+        if (path === undefined) {
+            this.alreadyCreatedObjects = {};
+            this.objectTypes = {};
+            return;
+        }
+        const prefix = path + ".";
+        for (const key in this.alreadyCreatedObjects) {
+            if (key === path || key.startsWith(prefix)) {
+                delete this.alreadyCreatedObjects[key];
+            }
+        }
+        for (const key in this.objectTypes) {
+            if (key === path || key.startsWith(prefix)) {
+                delete this.objectTypes[key];
+            }
+        }
+    }
+    /**
      * Gets a value from previousData by path and compares it to the new value.
      * @param {string} path - The state path.
      * @param {any} newValue - The new value to set.
