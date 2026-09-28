@@ -45,6 +45,12 @@ units: // Object of units to create for an id.
 
 roles: // Object of roles to override automatic role detection per id (same key lookup as units/descriptions).
 
+min: // Object of common.min values per id (same key lookup as roles).
+
+max: // Object of common.max values per id (same key lookup as roles).
+
+step: // Object of common.step values per id (same key lookup as roles).
+
 parseBase64: (true false) // parse base64 encoded strings to utf8
 
 parseBase64byIds: //Array of ids to parse base64 encoded strings to utf8
@@ -103,6 +109,8 @@ this.json2iob.resetCache(id + ".clients");
 ```
 
 ### Changelog
+2.6.27 add min, max and step options to set common.min/max/step per id (same key lookup as roles, value 0 respected)
+
 2.6.26 add resetCache(path) method to clear the creation cache after manual object deletion (also clears objectTypes, exact path/child match)
 
 2.6.25 use generic role "state" when type collapses to "mixed" (stable role across type changes); roles option override still wins; _lookupRole made private; .gitignore .DS_Store recursively

@@ -33,6 +33,9 @@ type Options = {
     states?: any;
     units?: any;
     roles?: any;
+    min?: any;
+    max?: any;
+    step?: any;
     parseBase64?: boolean;
     parseBase64byIds?: string[];
     parseBase64byIdsToHex?: string[];
@@ -85,6 +88,9 @@ declare class Json2iob {
      * @param {Object} [options.states] - Object of states to create for an id, new entries via json will be added automatically to the states.
      * @param {Object} [options.units] - Object of untis to create for an id
      * @param {Object} [options.roles] - Object of roles to override automatic role detection per id.
+     * @param {Object} [options.min] - Object of common.min values per id.
+     * @param {Object} [options.max] - Object of common.max values per id.
+     * @param {Object} [options.step] - Object of common.step values per id.
      * @param {boolean} [options.parseBase64] - Parse base64 encoded strings to utf8.
      * @param {string[]} [options.parseBase64byIds] - Array of ids to parse base64 encoded strings to utf8.
      * @param {string[]} [options.parseBase64byToHex] - Array of ids to parse base64 encoded strings to utf8.
@@ -105,6 +111,23 @@ declare class Json2iob {
      * @returns {string|undefined} - The first matching role or undefined.
      */
     private _lookupRole;
+    /**
+     * Looks up a value by trying multiple candidate keys in order.
+     * Skips entries that are undefined so a later candidate can still match.
+     * @param {any} map - The map to look up in.
+     * @param {(string|undefined)[]} candidates - Possible keys to try (e.g. full path, leaf, JSON key).
+     * @returns {any} - The first defined value or undefined.
+     */
+    private _lookupValue;
+    /**
+     * Applies min, max and step overrides to a common object by looking them up per id.
+     * Only finite numbers are applied, anything else is ignored.
+     * @param {iobCommon} common - The common object to extend.
+     * @param {Options} options - The options containing min, max and step maps.
+     * @param {(string|undefined)[]} candidates - Possible keys to try (e.g. full path, leaf, JSON key).
+     * @returns {void}
+     */
+    private _applyMinMaxStep;
     /**
      * Creates a state object in the adapter's namespace.
      * @param {string} path - The path of the state object.

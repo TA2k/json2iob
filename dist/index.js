@@ -89,6 +89,9 @@ class Json2iob {
      * @param {Object} [options.states] - Object of states to create for an id, new entries via json will be added automatically to the states.
      * @param {Object} [options.units] - Object of untis to create for an id
      * @param {Object} [options.roles] - Object of roles to override automatic role detection per id.
+     * @param {Object} [options.min] - Object of common.min values per id.
+     * @param {Object} [options.max] - Object of common.max values per id.
+     * @param {Object} [options.step] - Object of common.step values per id.
      * @param {boolean} [options.parseBase64] - Parse base64 encoded strings to utf8.
      * @param {string[]} [options.parseBase64byIds] - Array of ids to parse base64 encoded strings to utf8.
      * @param {string[]} [options.parseBase64byToHex] - Array of ids to parse base64 encoded strings to utf8.
@@ -198,6 +201,7 @@ class Json2iob {
                         if (role)
                             common.role = role;
                     }
+                    this._applyMinMaxStep(common, options, [statesKey, statesKey.split(".").pop()]);
                     await this._createState(path, common, options);
                 }
                 if (this._hasValueChanged(path, element, options)) {
@@ -378,6 +382,7 @@ class Json2iob {
                             if (role)
                                 common.role = role;
                         }
+                        this._applyMinMaxStep(common, options, [statesKey, statesKey.split(".").pop(), key]);
                         await this._createState(path + "." + pathKey, common, options);
                     }
                     if (this._hasValueChanged(path + "." + pathKey, element[key], options)) {
@@ -405,6 +410,41 @@ class Json2iob {
                 return roles[c];
         }
         return undefined;
+    }
+    /**
+     * Looks up a value by trying multiple candidate keys in order.
+     * Skips entries that are undefined so a later candidate can still match.
+     * @param {any} map - The map to look up in.
+     * @param {(string|undefined)[]} candidates - Possible keys to try (e.g. full path, leaf, JSON key).
+     * @returns {any} - The first defined value or undefined.
+     */
+    _lookupValue(map, candidates) {
+        if (!map)
+            return undefined;
+        for (const c of candidates) {
+            if (c && map[c] !== undefined)
+                return map[c];
+        }
+        return undefined;
+    }
+    /**
+     * Applies min, max and step overrides to a common object by looking them up per id.
+     * Only finite numbers are applied, anything else is ignored.
+     * @param {iobCommon} common - The common object to extend.
+     * @param {Options} options - The options containing min, max and step maps.
+     * @param {(string|undefined)[]} candidates - Possible keys to try (e.g. full path, leaf, JSON key).
+     * @returns {void}
+     */
+    _applyMinMaxStep(common, options, candidates) {
+        const min = this._lookupValue(options.min, candidates);
+        if (typeof min === "number" && isFinite(min))
+            common.min = min;
+        const max = this._lookupValue(options.max, candidates);
+        if (typeof max === "number" && isFinite(max))
+            common.max = max;
+        const step = this._lookupValue(options.step, candidates);
+        if (typeof step === "number" && isFinite(step))
+            common.step = step;
     }
     /**
      * Creates a state object in the adapter's namespace.
@@ -674,6 +714,11 @@ class Json2iob {
                             if (role)
                                 common.role = role;
                         }
+                        this._applyMinMaxStep(common, options, [
+                            statesKey,
+                            subKey.split(".").pop(),
+                            Object.keys(arrayElement)[1],
+                        ]);
                         await this._createState(path + "." + subKey, common, options);
                     }
                     if (this._hasValueChanged(path + "." + subKey, subValue, options)) {
