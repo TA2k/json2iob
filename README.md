@@ -109,7 +109,7 @@ this.json2iob.resetCache(id + ".clients");
 ```
 
 ### Changelog
-2.6.27 add min, max and step options to set common.min/max/step per id (same key lookup as roles, value 0 respected)
+2.6.27 add min, max and step options to set common.min/max/step per id (same key lookup as roles, value 0 respected, non-numeric values ignored)
 
 2.6.26 add resetCache(path) method to clear the creation cache after manual object deletion (also clears objectTypes, exact path/child match)
 
