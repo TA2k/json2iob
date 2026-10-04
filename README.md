@@ -66,6 +66,10 @@ dontSaveCreatedObjects: //create objects but do not save them to alreadyCreatedO
 excludeStateWithEnding: //Array of strings to exclude states with this ending
 
 makeStateWritableWithEnding: //Array of strings to make states with this ending writable
+
+previousData: // when set, writes through setStateChangedAsync so unchanged values are not re-published to subscribers. Works for list payloads too.
+
+setStateChanged: // (true false) write through setStateChangedAsync so unchanged values are not re-published to subscribers. Explicit flag, same effect as previousData without passing a payload.
 ```
 
 ```javascript
@@ -109,6 +113,8 @@ this.json2iob.resetCache(id + ".clients");
 ```
 
 ### Changelog
+2.6.28 add setStateChanged option; previousData now writes through setStateChangedAsync instead of an in-memory diff; fixes change detection for list payloads (e.g. child_device_list) and compares against the stored state; removed _hasValueChanged
+
 2.6.27 add min, max and step options to set common.min/max/step per id (same key lookup as roles, value 0 respected, non-numeric values ignored)
 
 2.6.26 add resetCache(path) method to clear the creation cache after manual object deletion (also clears objectTypes, exact path/child match)

@@ -46,30 +46,22 @@ class Json2iob {
         }
     }
     /**
-     * Gets a value from previousData by path and compares it to the new value.
+     * Writes a state value to the adapter.
+     * When options.setStateChanged or options.previousData is set, writes through setStateChangedAsync
+     * so unchanged values are not re-published to subscribers. Otherwise every value is written.
+     * setStateChanged compares against the stored state, so it also works for list payloads
+     * where the state path is named (e.g. by nickname/id) and diverges from the input structure.
      * @param {string} path - The state path.
-     * @param {any} newValue - The new value to set.
-     * @param {Options} options - The options containing previousData and _rootPath.
-     * @returns {boolean} - Returns true if the value has changed or previousData is not provided.
+     * @param {any} value - The value to set.
+     * @param {Options} options - The options containing setStateChanged / previousData.
+     * @returns {Promise<void>}
      */
-    _hasValueChanged(path, newValue, options) {
-        if (!options.previousData) {
-            return true;
+    async _writeState(path, value, options) {
+        if (options.setStateChanged || options.previousData) {
+            await this.adapter.setStateChangedAsync(path, value, true);
+            return;
         }
-        // Strip the root path prefix to get relative path within previousData
-        let relativePath = path;
-        if (options._rootPath && path.startsWith(options._rootPath + ".")) {
-            relativePath = path.substring(options._rootPath.length + 1);
-        }
-        const pathParts = relativePath.split(".");
-        let current = options.previousData;
-        for (const part of pathParts) {
-            if (current === undefined || current === null || typeof current !== "object") {
-                return true;
-            }
-            current = current[part];
-        }
-        return current !== newValue;
+        await this.adapter.setStateAsync(path, value, true);
     }
     /**
      * Parses the given element and creates states in the adapter based on the element's structure.
@@ -101,7 +93,8 @@ class Json2iob {
      * @param {string[]} [options.makeStateWritableWithEnding] - Array of strings to make states with this ending writable.
      * @param {boolean} [options.dontSaveCreatedObjects] - Create objects but do not save them to alreadyCreatedObjects.
      * @param {boolean} [options.useCompletePathForDescriptionsAndStates] - Use complete path for descriptions and states, not only last part.
-     * @param {any} [options.previousData] - Previous data object to compare against. Only setState when value changed.
+     * @param {boolean} [options.setStateChanged] - Write through setStateChangedAsync so unchanged values are not re-published to subscribers. Works for list payloads too.
+     * @param {any} [options.previousData] - When set, writes through setStateChangedAsync so unchanged values are not re-published to subscribers. Works for list payloads too.
      * @returns {Promise<void>} - A promise that resolves when the parsing is complete.
      */
     async parse(path, element, options = { write: false }) {
@@ -109,10 +102,6 @@ class Json2iob {
             if (element === null || element === undefined) {
                 this.adapter.log.debug("Cannot extract empty: " + path);
                 return;
-            }
-            // Set root path for previousData comparison on first call
-            if (options.previousData && !options._rootPath) {
-                options._rootPath = path;
             }
             if ((options.parseBase64 && this._isBase64(element)) ||
                 (options.parseBase64byIds && options.parseBase64byIds.includes(path)) ||
@@ -204,9 +193,7 @@ class Json2iob {
                     this._applyMinMaxStep(common, options, [statesKey, statesKey.split(".").pop()]);
                     await this._createState(path, common, options);
                 }
-                if (this._hasValueChanged(path, element, options)) {
-                    await this.adapter.setStateAsync(path, element, true);
-                }
+                await this._writeState(path, element, options);
                 return;
             }
             if (options.removePasswords && path.toString().toLowerCase().includes("password")) {
@@ -385,9 +372,7 @@ class Json2iob {
                         this._applyMinMaxStep(common, options, [statesKey, statesKey.split(".").pop(), key]);
                         await this._createState(path + "." + pathKey, common, options);
                     }
-                    if (this._hasValueChanged(path + "." + pathKey, element[key], options)) {
-                        await this.adapter.setStateAsync(path + "." + pathKey, element[key], true);
-                    }
+                    await this._writeState(path + "." + pathKey, element[key], options);
                 }
             }
         }
@@ -721,9 +706,7 @@ class Json2iob {
                         ]);
                         await this._createState(path + "." + subKey, common, options);
                     }
-                    if (this._hasValueChanged(path + "." + subKey, subValue, options)) {
-                        await this.adapter.setStateAsync(path + "." + subKey, subValue, true);
-                    }
+                    await this._writeState(path + "." + subKey, subValue, options);
                     continue;
                 }
                 await this.parse(path + "." + arrayPath, arrayElement, options);

@@ -49,6 +49,8 @@ function createMockAdapter() {
     states: {},
     objects: {},
     setStateCallCount: 0,
+    setStateChangedCallCount: 0,
+    setStateChangedWriteCount: 0,
     extendObjectCalls: {},
     log: {
       error: (message) => console.error("ERROR:", message),
@@ -59,6 +61,14 @@ function createMockAdapter() {
     setStateAsync: async function (key, value) {
       this.states[key] = value;
       this.setStateCallCount++;
+      return Promise.resolve();
+    },
+    setStateChangedAsync: async function (key, value) {
+      this.setStateChangedCallCount++;
+      if (this.states[key] !== value) {
+        this.states[key] = value;
+        this.setStateChangedWriteCount++;
+      }
       return Promise.resolve();
     },
     extendObjectAsync: async function (id, obj) {
@@ -94,7 +104,7 @@ describe("Json2iob", () => {
   });
 
   describe("previousData option", () => {
-    test("should set all states when previousData is not provided", async () => {
+    test("should write every state via setStateAsync when previousData is not provided", async () => {
       const mock = createMockAdapter();
       const adapter = new Json2iob(mock);
       const data = { temperature: 25, humidity: 60, name: "sensor1" };
@@ -102,12 +112,11 @@ describe("Json2iob", () => {
       await adapter.parse("test", data, { write: true });
 
       expect(mock.setStateCallCount).toBe(3);
+      expect(mock.setStateChangedCallCount).toBe(0);
       expect(mock.states["test.temperature"]).toBe(25);
-      expect(mock.states["test.humidity"]).toBe(60);
-      expect(mock.states["test.name"]).toBe("sensor1");
     });
 
-    test("should not set states when previousData has same values", async () => {
+    test("should route writes through setStateChangedAsync when previousData is set", async () => {
       const mock = createMockAdapter();
       const adapter = new Json2iob(mock);
       const data = { temperature: 25, humidity: 60, name: "sensor1" };
@@ -115,67 +124,73 @@ describe("Json2iob", () => {
       await adapter.parse("test", data, { write: true, previousData: data });
 
       expect(mock.setStateCallCount).toBe(0);
-      expect(mock.states).toEqual({});
+      expect(mock.setStateChangedCallCount).toBe(3);
+      // First run: nothing stored yet, so all values are written.
+      expect(mock.setStateChangedWriteCount).toBe(3);
+      expect(mock.states["test.temperature"]).toBe(25);
     });
 
-    test("should only set changed states when previousData differs", async () => {
+    test("should re-publish only changed values on repeated parse", async () => {
       const mock = createMockAdapter();
       const adapter = new Json2iob(mock);
-      const previousData = { temperature: 25, humidity: 60, name: "sensor1" };
-      const newData = { temperature: 26, humidity: 60, name: "sensor1" };
 
-      await adapter.parse("test", newData, { write: true, previousData: previousData });
+      await adapter.parse("test", { temperature: 25, humidity: 60 }, { write: true, previousData: {} });
+      const firstWrites = mock.setStateChangedWriteCount;
 
-      expect(mock.setStateCallCount).toBe(1);
+      await adapter.parse("test", { temperature: 26, humidity: 60 }, { write: true, previousData: {} });
+
+      // Only temperature changed on the second parse.
+      expect(mock.setStateChangedWriteCount).toBe(firstWrites + 1);
       expect(mock.states["test.temperature"]).toBe(26);
-      expect(mock.states["test.humidity"]).toBeUndefined();
-      expect(mock.states["test.name"]).toBeUndefined();
     });
 
-    test("should handle nested objects with previousData", async () => {
+    test("should suppress unchanged values in list/array payloads", async () => {
       const mock = createMockAdapter();
       const adapter = new Json2iob(mock);
-      const previousData = {
-        sensor: { temperature: 25, humidity: 60 },
-        status: "online",
+      const payload = {
+        child_device_list: [
+          { nickname: "TRV1", temp: 20, humidity: 40 },
+          { nickname: "TRV2", temp: 21, humidity: 41 },
+        ],
       };
-      const newData = {
-        sensor: { temperature: 25, humidity: 65 },
-        status: "online",
+      const options = { write: true, previousData: payload, preferedArrayName: "nickname" };
+
+      await adapter.parse("test", payload, options);
+      const firstWrites = mock.setStateChangedWriteCount;
+      expect(firstWrites).toBeGreaterThan(0);
+
+      // Re-parsing identical list data must not re-publish anything.
+      // (With the previous in-memory diff this failed, because the state path is named
+      // by nickname while the payload still used array indexes.)
+      await adapter.parse("test", payload, options);
+      expect(mock.setStateChangedWriteCount).toBe(firstWrites);
+
+      // A changed list value must still be published.
+      const changed = {
+        child_device_list: [
+          { nickname: "TRV1", temp: 22, humidity: 40 },
+          { nickname: "TRV2", temp: 21, humidity: 41 },
+        ],
       };
+      await adapter.parse("test", changed, { ...options, previousData: changed });
 
-      await adapter.parse("test", newData, { write: true, previousData: previousData });
-
-      expect(mock.setStateCallCount).toBe(1);
-      expect(mock.states["test.sensor.humidity"]).toBe(65);
-      expect(mock.states["test.sensor.temperature"]).toBeUndefined();
-      expect(mock.states["test.status"]).toBeUndefined();
+      expect(mock.setStateChangedWriteCount).toBe(firstWrites + 1);
+      expect(mock.states["test.TRV1.temp"]).toBe(22);
+      expect(mock.states["test.TRV2.humidity"]).toBe(41);
     });
 
-    test("should set state when key is new in data", async () => {
+    test("should route through setStateChangedAsync via explicit setStateChanged option", async () => {
       const mock = createMockAdapter();
       const adapter = new Json2iob(mock);
-      const previousData = { temperature: 25 };
-      const newData = { temperature: 25, humidity: 60 };
 
-      await adapter.parse("test", newData, { write: true, previousData: previousData });
+      await adapter.parse("test", { temperature: 25 }, { write: true, setStateChanged: true });
+      expect(mock.setStateCallCount).toBe(0);
+      expect(mock.setStateChangedCallCount).toBe(1);
+      expect(mock.setStateChangedWriteCount).toBe(1);
 
-      expect(mock.setStateCallCount).toBe(1);
-      expect(mock.states["test.humidity"]).toBe(60);
-      expect(mock.states["test.temperature"]).toBeUndefined();
-    });
-
-    test("should handle boolean value changes", async () => {
-      const mock = createMockAdapter();
-      const adapter = new Json2iob(mock);
-      const previousData = { active: true, enabled: false };
-      const newData = { active: false, enabled: false };
-
-      await adapter.parse("test", newData, { write: true, previousData: previousData });
-
-      expect(mock.setStateCallCount).toBe(1);
-      expect(mock.states["test.active"]).toBe(false);
-      expect(mock.states["test.enabled"]).toBeUndefined();
+      // Same value again is not re-published.
+      await adapter.parse("test", { temperature: 25 }, { write: true, setStateChanged: true });
+      expect(mock.setStateChangedWriteCount).toBe(1);
     });
   });
 

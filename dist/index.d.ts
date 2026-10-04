@@ -46,7 +46,7 @@ type Options = {
     dontSaveCreatedObjects?: boolean;
     useCompletePathForDescriptionsAndStates?: boolean;
     previousData?: any;
-    _rootPath?: string;
+    setStateChanged?: boolean;
 };
 declare class Json2iob {
     private adapter;
@@ -63,13 +63,17 @@ declare class Json2iob {
      */
     resetCache(path?: string): void;
     /**
-     * Gets a value from previousData by path and compares it to the new value.
+     * Writes a state value to the adapter.
+     * When options.setStateChanged or options.previousData is set, writes through setStateChangedAsync
+     * so unchanged values are not re-published to subscribers. Otherwise every value is written.
+     * setStateChanged compares against the stored state, so it also works for list payloads
+     * where the state path is named (e.g. by nickname/id) and diverges from the input structure.
      * @param {string} path - The state path.
-     * @param {any} newValue - The new value to set.
-     * @param {Options} options - The options containing previousData and _rootPath.
-     * @returns {boolean} - Returns true if the value has changed or previousData is not provided.
+     * @param {any} value - The value to set.
+     * @param {Options} options - The options containing setStateChanged / previousData.
+     * @returns {Promise<void>}
      */
-    private _hasValueChanged;
+    private _writeState;
     /**
      * Parses the given element and creates states in the adapter based on the element's structure.
      * @method parse
@@ -100,7 +104,8 @@ declare class Json2iob {
      * @param {string[]} [options.makeStateWritableWithEnding] - Array of strings to make states with this ending writable.
      * @param {boolean} [options.dontSaveCreatedObjects] - Create objects but do not save them to alreadyCreatedObjects.
      * @param {boolean} [options.useCompletePathForDescriptionsAndStates] - Use complete path for descriptions and states, not only last part.
-     * @param {any} [options.previousData] - Previous data object to compare against. Only setState when value changed.
+     * @param {boolean} [options.setStateChanged] - Write through setStateChangedAsync so unchanged values are not re-published to subscribers. Works for list payloads too.
+     * @param {any} [options.previousData] - When set, writes through setStateChangedAsync so unchanged values are not re-published to subscribers. Works for list payloads too.
      * @returns {Promise<void>} - A promise that resolves when the parsing is complete.
      */
     parse(path: string, element: any, options?: Options): Promise<void>;
